@@ -1,3 +1,3 @@
-requests
-websockets
-wheel
+requests>=2.24.0
+websockets>=8.1
+wheel>=0.35.1

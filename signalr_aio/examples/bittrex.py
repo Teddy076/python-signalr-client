@@ -1,11 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Stanislav Lazarov
-
-# A practical example showing how to connect to Bittrex
-# Requires Python3.5+
-# pip install git+https://github.com/slazarov/python-signalr-client.git
+# pip install git+https://github.com/r3bers/python-signalr-client.git
 from signalr_aio import Connection
 from base64 import b64decode
 from zlib import decompress, MAX_WBITS

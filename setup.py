@@ -1,23 +1,24 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 from setuptools import setup, find_packages
 
 install_requires = \
-    ['requests>=2.18.4',
-     'websockets>=4.0.1'
+    ['requests>=2.24.0',
+     'websockets>=8.1',
+     'wheel>=0.35.1'
      ]
 
 setup(
     name='signalr-client-aio',
-    version='0.0.1.6.2',
-    author='Stanislav Lazarov',
-    author_email='s.a.lazarov@gmail.com',
+    version='0.0.2.8.2',
+    author='Mikhail Solovev',
+    author_email='mike@solovjov.net',
     license='MIT',
-    url='https://github.com/slazarov/python-signalr-client',
+    url='https://github.com/r3bers/python-signalr-client',
     packages=find_packages(exclude=['tests*']),
     install_requires=install_requires,
     description='Simple python SignalR client using asyncio.',
-    download_url='https://github.com/slazarov/python-signalr-client.git',
+    download_url='https://github.com/r3bers/python-signalr-client.git',
     keywords=['signalr', 'sginalr-weboscket', 'signalr-client', 'signalr-asyncio', 'signalr-aio'],
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -25,8 +26,6 @@ setup(
         'Intended Audience :: Information Technology',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.7'
     ]
 )
