@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# signalr_aio/examples/_bittrex.py
+# signalr_aio/examples/bittrex.py
 # Stanislav Lazarov
 
 # A practical example showing how to connect to Bittrex

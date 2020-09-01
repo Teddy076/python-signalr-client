@@ -73,16 +73,14 @@ class Transport:
         self._conn_handler = asyncio.ensure_future(self._socket(self.ws_loop), loop=self.ws_loop)
 
     async def _socket(self, loop):
-        async with websockets.connect(self._ws_params.socket_url, extra_headers=self._ws_params.headers,
-                                      loop=loop) as self.ws:
+        async with websockets.connect(self._ws_params.socket_url, extra_headers=self._ws_params.headers, loop=loop) as self.ws:
             self._connection.started = True
             await self._master_handler(self.ws)
 
     async def _master_handler(self, ws):
         consumer_task = asyncio.ensure_future(self._consumer_handler(ws), loop=self.ws_loop)
         producer_task = asyncio.ensure_future(self._producer_handler(ws), loop=self.ws_loop)
-        done, pending = await asyncio.wait([consumer_task, producer_task],
-                                           loop=self.ws_loop, return_when=asyncio.FIRST_EXCEPTION)
+        done, pending = await asyncio.wait([consumer_task, producer_task], loop=self.ws_loop, return_when=asyncio.FIRST_EXCEPTION)
 
         for task in pending:
             task.cancel()

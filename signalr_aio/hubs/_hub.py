@@ -18,7 +18,7 @@ class HubServer:
         self.__connection = connection
         self.__hub = hub
 
-    def invoke(self, method, *data):
+    def invoke(self, method, data):
         message = {
             'H': self.name,
             'M': method,

@@ -3,20 +3,18 @@
 
 # signalr_aio/_connection.py
 # Stanislav Lazarov
-
-
 from .events import EventHook
 from .hubs import Hub
 from .transports import Transport
 
 
 class Connection(object):
-    protocol_version = '1.5'
+    protocol_version = '2.0'
 
     def __init__(self, url, session=None):
         self.url = url
         self.__hubs = {}
-        self.__send_counter = -1
+        self.__send_counter = 0
         self.hub = None
         self.session = session
         self.received = EventHook()
