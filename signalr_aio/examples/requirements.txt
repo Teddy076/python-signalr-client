@@ -1,0 +1,5 @@
+git+https://github.com/r3bers/python-signalr-client.git
+setuptools
+picotui
+ujson
+uvloop
