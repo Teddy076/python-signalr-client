@@ -3,6 +3,7 @@
 
 # signalr_aio/hubs/_hub.py
 # Stanislav Lazarov
+from ._exceptions import UnhandledMethodError
 
 
 class Hub:
@@ -40,7 +41,10 @@ class HubClient(object):
                 if hub.lower() == self.name.lower():
                     method = inner_data['M']
                     message = inner_data['A']
-                    await self.__handlers[method](message)
+                    if method in self.__handlers:
+                        await self.__handlers[method](message)
+                    else:
+                        raise UnhandledMethodError(method, message, "Received message don't have a handler")
 
         connection.received += handle
 

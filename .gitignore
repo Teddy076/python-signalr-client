@@ -106,6 +106,7 @@ venv.bak/
 
 # Other
 .idea/
+.run/
 run.py
 old_releases/
 pypi_build.sh

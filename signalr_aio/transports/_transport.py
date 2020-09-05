@@ -4,17 +4,12 @@
 # signalr_aio/transports/_transport.py
 # Stanislav Lazarov
 
-# python compatiblity for <3.6
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
-
 # -----------------------------------
 # Internal Imports
 from ._exceptions import ConnectionClosed
 from ._parameters import WebSocketParameters
 from ._queue_events import InvokeEvent, CloseEvent
+from ..hubs._exceptions import UnhandledMethodError
 
 # -----------------------------------
 # External Imports
@@ -90,7 +85,11 @@ class Transport:
             message = await ws.recv()
             if len(message) > 0:
                 data = loads(message)
-                await self._connection.received.fire(**data)
+                try:
+                    await self._connection.received.fire(**data)
+                except UnhandledMethodError as uError:
+                    error = {'E': uError.message, 'M': uError.rcv_method, 'A': uError.rcv_message}
+                    await self._connection.error.fire(error)
 
     async def _producer_handler(self, ws):
         while True:
