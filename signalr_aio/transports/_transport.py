@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# signalr_aio/transports/_transport.py
-# Stanislav Lazarov
-
-# -----------------------------------
 # Internal Imports
 from ._exceptions import ConnectionClosed
 from ._parameters import WebSocketParameters
@@ -82,14 +76,18 @@ class Transport:
 
     async def _consumer_handler(self, ws):
         while True:
-            message = await ws.recv()
-            if len(message) > 0:
-                data = loads(message)
-                try:
-                    await self._connection.received.fire(**data)
-                except UnhandledMethodError as uError:
-                    error = {'E': uError.message, 'M': uError.rcv_method, 'A': uError.rcv_message}
-                    await self._connection.error.fire(error)
+            try:
+                message = await ws.recv()
+                if len(message) > 0:
+                    data = loads(message)
+                    try:
+                        await self._connection.received.fire(**data)
+                    except UnhandledMethodError as uError:
+                        error = {'E': uError.message, 'M': uError.rcv_method, 'A': uError.rcv_message}
+                        await self._connection.error.fire(error)
+            except Exception as e:
+                self._connection.started = False
+                raise e
 
     async def _producer_handler(self, ws):
         while True:
@@ -109,4 +107,5 @@ class Transport:
                     break
                 self.invoke_queue.task_done()
             except Exception as e:
+                self._connection.started = False
                 raise e

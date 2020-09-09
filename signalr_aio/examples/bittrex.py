@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# pip install git+https://github.com/r3bers/python-signalr-client.git
 import asyncio
 import json
 from base64 import b64decode
@@ -30,23 +27,24 @@ class MyBittrex:
         self.candle = -1
         self.last_state = self.current_time()
         self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        self.last_message = ""
 
         # Schedule three calls *concurrently*:
         # Create connection
         # Users can optionally pass a session object to the client, e.g a cfscrape session to bypass cloudflare.
         self.con_master = Connection(self.url, session=None)
-        self.con_slave = Connection(self.url, session=None)
 
         # Register hub
         self.hub_master = self.con_master.register_hub('c3')
-        self.hub_slave = self.con_slave.register_hub('c3')
 
         # Assign debug message handler. It streams unfiltered data, uncomment it to test.
-        # connection.received += on_debug
+        # self.con_master.received += self.on_debug
+
+        # Assign Time of last packet
+        self.con_master.received += self.on_time
 
         # Assign error handler
         self.con_master.error += self.on_error
-        self.con_slave.error += self.on_error
 
         # Assign hub message handler
         self.public_methods = [
@@ -76,17 +74,20 @@ class MyBittrex:
             print(ChoCho.args)
             return message
 
+    # Create time handler.
+    async def on_time(self, **msg):
+        self.last_message = msg
+        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+
     # Create debug message handler.
     @staticmethod
     async def on_debug(**msg):
-        for message in msg:
-            print("Debug information: ", end='')
-            print(str(message))
+        print("Debug information: ", end='')
+        print(str(msg))
 
     # Create error handler
     @staticmethod
     async def on_error(msg):
-        print('We are here')
         if 'E' in msg:
             print('Error: ' + msg['E'])
         if 'M' in msg:
@@ -105,45 +106,45 @@ class MyBittrex:
     async def on_candle(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.candle = decoded_msg['sequence']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_heartbeat(self, msg):
+        self.last_message = msg
         # print('.', end='')
         self.last_state = self.current_time()
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_summaries(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.summaries = decoded_msg['sequence']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_summary(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.summary = decoded_msg['percentChange']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_book(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.book = decoded_msg['sequence']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_tickers(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.tickers = decoded_msg['sequence']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_ticker(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.ticker = decoded_msg['lastTradeRate']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 
     async def on_trade(self, msg):
         decoded_msg = await self.process_message(msg[0])
         self.trade = decoded_msg['deltas'][0]['rate']
-        self.last_date = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+
+    def restart(self):
+        for method in self.public_methods:
+            self.hub_master.server.invoke('Subscribe', [[method['subscribe']]])
+        self.con_master.start()
+        self.last_state = self.current_time()
 
 
 async def main():
+    connect_error = 0
     freeze = False
     bit = MyBittrex()
     try:
@@ -217,19 +218,33 @@ async def main():
             if bit.last_state < (bit.current_time() - 10000) and not freeze:
                 print(str(bit.last_date) + " — Heartbeat didn't get more than 10 sec")
                 freeze = True
+                connect_error = 1
+                if bit.con_master.started:
+                    bit.con_master.close()
             elif freeze and bit.last_state > (bit.current_time() - 10000):
                 freeze = False
                 print("Heartbeat Unfreezes")
             elif not freeze:
-                # print(".", end='')
-                print(str(bit.last_date) + ' — Candle: ' + str(bit.candle) +
-                      ', Summaries: ' + str(bit.summaries) +
-                      ', Summary: ' + str(bit.summary) +
-                      '%, Book: ' + str(bit.book) +
-                      ', Tickers: ' + str(bit.tickers) +
-                      ', Ticker: ' + str(bit.ticker) +
-                      ', Trade: ' + str(bit.trade) +
-                      ' — OK: ' + str((bit.current_time() - bit.last_state) / 1000) + 's')
+                print(".", end='')
+                # print(str(bit.last_date) + ' — Candle: ' + str(bit.candle) +
+                #       ', Summaries: ' + str(bit.summaries) +
+                #       ', Summary: ' + str(bit.summary) +
+                #       '%, Book: ' + str(bit.book) +
+                #       ', Tickers: ' + str(bit.tickers) +
+                #       ', Ticker: ' + str(bit.ticker) +
+                #       ', Trade: ' + str(bit.trade) +
+                #       ' — OK: ' + str((bit.current_time() - bit.last_state) / 1000) + 's')
+            elif connect_error > 0:
+                print(str(bit.last_date) + ' — Reconnect try ' + str(connect_error) + ': ', end='')
+                try:
+                    bit.restart()
+                    connect_error = 0
+                    freeze = False
+                    print('Success.')
+                except Exception as some_ex:
+                    print('Error: ' + str(some_ex))
+                    connect_error += 1
+                    await asyncio.sleep(5)
 
 
 if __name__ == "__main__":

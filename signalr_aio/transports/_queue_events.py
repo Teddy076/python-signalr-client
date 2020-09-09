@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# signalr_aio/transports/_queue_events.py
-# Stanislav Lazarov
-
-
 class Event(object):
     """
     Event is base class providing an interface

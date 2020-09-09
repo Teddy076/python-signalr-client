@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# signalr_aio/transports/_parameters.py
-# Stanislav Lazarov
-
-
 from json import dumps
 from urllib.parse import urlparse, urlunparse, urlencode
 import requests
